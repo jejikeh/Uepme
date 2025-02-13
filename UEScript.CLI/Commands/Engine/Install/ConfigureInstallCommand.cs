@@ -49,7 +49,7 @@ public static class ConfigureInstallCommand
 
             var engineAssociationRepository = serviceProvider.GetRequiredService<IUnrealEngineAssociationRepository>();
             var fileDownloader = serviceProvider.GetRequiredService<IFileDownloaderService>();
-            var fileExtractor = serviceProvider.GetRequiredService<IFileExtractor>();
+            var archiveExtractor = serviceProvider.GetRequiredService<IArchiveExtractor>();
 
             var result = Task.Run(Act).Result;
             
@@ -58,7 +58,7 @@ public static class ConfigureInstallCommand
             return;
 
             async Task<Result<string, CommandError>> Act() => 
-                await InstallCommand.Execute(name, path, isDefault, url, logger, fileDownloader, fileExtractor, engineAssociationRepository);
+                await InstallCommand.Execute(name, path, isDefault, url, logger, fileDownloader, archiveExtractor, engineAssociationRepository);
         });
 
         command.Add(installCommand);

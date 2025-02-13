@@ -5,6 +5,7 @@ using UEScript.CLI.Common;
 using UEScript.CLI.Services;
 using UEScript.Utils.Extensions;
 using UEScript.Utils.Results;
+using Spectre.Console;
 
 namespace UEScript.CLI.Commands.Engine.Install;
 
@@ -17,7 +18,7 @@ public static class InstallCommand
         string url, 
         ILogger logger,
         IFileDownloaderService fileDownloaderService,
-        IFileExtractor fileExtractor,
+        IArchiveExtractor archiveExtractor,
         IUnrealEngineAssociationRepository repository)
     {
         logger.LogTrace("Install command start execution...");
@@ -43,7 +44,7 @@ public static class InstallCommand
         
         logger.LogInformation($"Starting extract engine zip from '{url}'...");
         
-        var fileExtractorResult = await ExtractDownloadFile(fileExtractor, filePath, directory);
+        var fileExtractorResult = await ExtractDownloadedFile(filePath, directory.FullName, archiveExtractor);
         
         if (fileExtractorResult is null || !fileExtractorResult.IsSuccess)
         {
@@ -78,16 +79,15 @@ public static class InstallCommand
         return downloadResult;
     }
     
-    private static async Task<Result<string, CommandError>?> ExtractDownloadFile(IFileExtractor fileExtractor,FileInfo fileInfo, DirectoryInfo directory)
+    private static async Task<Result<string, CommandError>?> ExtractDownloadedFile(FileInfo file, string dir, IArchiveExtractor archiveExtractor)
     {
-        var fileExtractorResult = default(Result<string, CommandError>);
-        await using var stream = new FileStream(fileInfo.FullName, FileMode.Open);
-        
-        await AnsiConsoleUtils.WrapTaskAroundProgressBar("Extracting: ", () =>
+        var extractResult = default(Result<string, CommandError>);
+
+        await AnsiConsoleUtils.WrapTaskAroundProgressBar("Extracting engine: ", async (ctx) =>
         {
-            fileExtractorResult = fileExtractor.ExtractStreamToDirectory(stream, directory);
+            extractResult = archiveExtractor.Extract(file, dir, (value) => ctx.Value(value));
         });
 
-        return fileExtractorResult;
+        return extractResult;
     }
 }

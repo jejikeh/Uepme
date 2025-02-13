@@ -1,6 +1,7 @@
 using System.CommandLine;
 using UEScript.CLI.Commands.Build;
 using UEScript.CLI.Commands.Engine;
+using UEScript.CLI.Commands.Archive;
 
 namespace UEScript.CLI.Commands;
 
@@ -19,6 +20,7 @@ public static class ConfigureRootCommand
 
         rootCommand.AddBuildCommand();
         rootCommand.AddEngineCommand();
+        rootCommand.AddArchiveCommand();
         
         return rootCommand;
     }
