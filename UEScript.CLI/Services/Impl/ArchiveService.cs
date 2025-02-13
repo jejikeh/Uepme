@@ -5,21 +5,16 @@ using SharpCompress.Archives.Tar;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Writers;
-using System;
-using System.Collections.Generic;
-using System.Formats.Tar;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UEScript.CLI.Commands;
 using UEScript.Utils.Results;
+using UEScript.CLI.Services.Enums;
 
 namespace UEScript.CLI.Services.Impl
 {
-    public class ArchiveService(ILogger<ArchiveExtractor> logger) : IArchiveService
+    public class ArchiveService(ILogger<ArchiveService> logger) : IArchiveService
     {
         Result<string, CommandError> ProcessArchive<T>(T archive, string sourcePath, string destinationPath)
-        where T : IWritableArchive
+            where T : IWritableArchive
         {
             try
             {
@@ -35,18 +30,20 @@ namespace UEScript.CLI.Services.Impl
         }
 
         delegate IWritableArchive ArchiveCreator();
-        static Dictionary<string, ArchiveCreator> archives = new Dictionary<string, ArchiveCreator> {
-            {".zip", ZipArchive.Create },
-            {".tar", TarArchive.Create },
-            {".gz", GZipArchive.Create },
+        static Dictionary<SupportedArchivePackTypes, ArchiveCreator> archives = new() {
+            { SupportedArchivePackTypes.zip, ZipArchive.Create },
+            { SupportedArchivePackTypes.tar, TarArchive.Create },
+            { SupportedArchivePackTypes.gz, GZipArchive.Create },
         };
 
         public Result<string, CommandError> Archive(string sourcePath, FileInfo destination)
         {
-            if (!archives.ContainsKey(destination.Extension))
+            var type = Archives.GetArchivePackType(destination.Extension);
+
+            if (type == SupportedArchivePackTypes.unknown)
                 return Result<string, CommandError>.Error(new CommandError("Unknown archive type"));
-            var archive = archives[destination.Extension]();
-            return ProcessArchive(archive, sourcePath, destination.FullName);
+
+            return ProcessArchive(archives[type](), sourcePath, destination.FullName);
         }
     }
 }
